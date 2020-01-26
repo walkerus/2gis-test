@@ -1,0 +1,37 @@
+version: '3.7'
+services:
+  db:
+    image: postgres:10
+    container_name: 2gis-test-db
+    environment:
+      POSTGRES_USER: 2gis
+      POSTGRES_PASSWORD: qwerty
+    volumes:
+      - ../volumes/db/:/var/lib/pgsql/data
+    ports:
+      - 5432:5432
+
+  app:
+    build:
+      context: ./docker/app
+      args:
+        WEB_USER_ID: 1000
+        WEB_USER_NAME: foo
+    container_name: 2gis-test-app
+    tty: true
+    volumes:
+      - .:/var/www/app
+
+  nginx:
+    build:
+      context: ./docker/nginx/
+    container_name: 2gis-test-nginx
+    environment:
+      WEB_DOMAIN: localhost
+      APP_NAME: app
+    depends_on: [app]
+    ports:
+      - 80:80
+    volumes:
+      - .:/var/www/app
+    command: /bin/bash -c "envsubst '$$WEB_DOMAIN $$APP_NAME' < /etc/nginx/conf.d/settings.site > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
