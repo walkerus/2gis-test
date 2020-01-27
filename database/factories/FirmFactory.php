@@ -15,7 +15,7 @@ use Faker\Generator as Faker;
 |
 */
 
-$factory->define(\App\Models\Firm::class, function (Faker $faker) {
+$factory->define(\App\Models\Firm::class, function (Faker $faker, array $attributes) {
     $faker->addProvider(new \Faker\Provider\ru_RU\Company($faker));
     $faker->addProvider(new \Faker\Provider\ru_RU\PhoneNumber($faker));
 

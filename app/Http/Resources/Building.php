@@ -4,21 +4,19 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class Firm extends FirmBase
+class Building extends BuildingBase
 {
     public function toArray($request): array
     {
         $data = [
             'attributes' => [
-                'name' => $this->name,
-                'phones' => $this->phones,
+                'address' => $this->address,
+                'latitude' => $this->latitude,
+                'longitude' => $this->longitude,
             ],
             'relationships' => [
-                'rubrics' => [
-                    'data' => RubricBase::collection($this->rubricsModels())
-                ],
-                'building' => [
-                    'data' => BuildingBase::make($this->building)
+                'firms' => [
+                    'data' => FirmBase::collection($this->firms)
                 ]
             ]
         ];

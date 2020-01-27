@@ -12,6 +12,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Building extends Model
 {
+    protected $casts = [
+        'latitude' => 'float',
+        'longitude' => 'float',
+    ];
+
     public function firms(): HasMany
     {
         return $this->hasMany(Firm::class);
