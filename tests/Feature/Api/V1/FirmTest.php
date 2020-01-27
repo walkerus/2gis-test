@@ -240,4 +240,171 @@ class FirmTest extends TestCase
             'data' => $expectedData
         ]);
     }
+
+    public function testGetAllFirmsInRadiusBadRequest(): void
+    {
+        $response = $this->get('/api/v1/firms/radius');
+
+        $response->assertStatus(400);
+        $response->assertExactJson(['errors' => [['title' => 'bad_params', 'status' => 400]]]);
+
+        $response = $this->get('/api/v1/firms/radius?radius=1000&latitude=55.9&longitude=90');
+
+        $response->assertStatus(200);
+    }
+
+    public function testGetAllFirmsInRadius(): void
+    {
+        $expectedData = [
+            [
+                'id' => 2,
+                'type' => 'firms',
+                'attributes' => [
+                    'name' => 'bar',
+                    'phones' => [
+                        '111-1',
+                    ]
+                ],
+                'relationships' => [
+                    'building' => [
+                        'data' => [
+                            'id' => 2,
+                            'type' => 'buildings'
+                        ]
+                    ],
+                    'rubrics' => [
+                        'data' => [
+                            [
+                                'id' => 1,
+                                'type' => 'rubrics'
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                'id' => 3,
+                'type' => 'firms',
+                'attributes' => [
+                    'name' => 'boo',
+                    'phones' => [
+                        '111-1',
+                    ]
+                ],
+                'relationships' => [
+                    'building' => [
+                        'data' => [
+                            'id' => 3,
+                            'type' => 'buildings'
+                        ]
+                    ],
+                    'rubrics' => [
+                        'data' => [
+                            [
+                                'id' => 1,
+                                'type' => 'rubrics'
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+        ];
+
+        $rubric = new Rubric();
+        $rubric->id = 1;
+        $rubric->name = 'Foo';
+        $rubric->ancestors = '{}';
+        $rubric->save();
+
+        factory(\App\Models\Building::class)->create([
+            'id' => 1,
+            'latitude' => 30.6,
+            'longitude' => 100.6
+        ]);
+
+        factory(\App\Models\Building::class)->create([
+            'id' => 2,
+            'latitude' => 30.501,
+            'longitude' => 100.49
+        ]);
+
+        factory(\App\Models\Building::class)->create([
+            'id' => 3,
+            'latitude' => 30.508,
+            'longitude' => 100.5
+        ]);
+
+        factory(\App\Models\Firm::class)->create([
+            'id' => 1,
+            'building_id' => 1,
+            'name' => 'foo',
+            'phones' => '{111-1}',
+            'rubrics' => '{1}',
+        ]);
+
+        factory(\App\Models\Firm::class)->create([
+            'id' => 2,
+            'building_id' => 2,
+            'name' => 'bar',
+            'phones' => '{111-1}',
+            'rubrics' => '{1}',
+        ]);
+
+        factory(\App\Models\Firm::class)->create([
+            'id' => 3,
+            'building_id' => 3,
+            'name' => 'boo',
+            'phones' => '{111-1}',
+            'rubrics' => '{1}',
+        ]);
+
+        $response = $this->get('/api/v1/firms/radius?radius=1000&latitude=30.5&longitude=100.5');
+
+        $response->assertStatus(200);
+        $response->assertExactJson([
+            'links' => [
+                'self' => env('APP_URL') . '/api/v1/firms/radius?page=1&radius=1000&latitude=30.5&longitude=100.5',
+                'last' => env('APP_URL') . '/api/v1/firms/radius?page=1&radius=1000&latitude=30.5&longitude=100.5',
+            ],
+            'data' => $expectedData
+        ]);
+
+        $expectedData[] = [
+            'id' => 1,
+            'type' => 'firms',
+            'attributes' => [
+                'name' => 'foo',
+                'phones' => [
+                    '111-1',
+                ]
+            ],
+            'relationships' => [
+                'building' => [
+                    'data' => [
+                        'id' => 1,
+                        'type' => 'buildings'
+                    ]
+                ],
+                'rubrics' => [
+                    'data' => [
+                        [
+                            'id' => 1,
+                            'type' => 'rubrics'
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $response = $this->get('/api/v1/firms/radius?radius=20000&latitude=30.5&longitude=100.5');
+
+        $response->assertStatus(200);
+        $response->assertExactJson([
+            'links' => [
+                'self' => env('APP_URL') . '/api/v1/firms/radius?page=1&radius=20000&latitude=30.5&longitude=100.5',
+                'last' => env('APP_URL') . '/api/v1/firms/radius?page=1&radius=20000&latitude=30.5&longitude=100.5',
+            ],
+            'data' => $expectedData
+        ]);
+    }
 }
