@@ -13,7 +13,7 @@ before_script:
   - cp .env.example .env
   - cp docker-compose.example.yml docker-compose.yml
   - docker-compose up -d --build
-  - docker-compose exec app composer install
+  - docker-compose exec -uroot app composer install
   - docker-compose exec app php artisan migrate
 
 script:
