@@ -14,7 +14,8 @@ before_script:
   - cp docker-compose.example.yml docker-compose.yml
   - docker-compose up -d --build
   - docker-compose exec -uroot app composer install
-  - docker-compose exec app php artisan migrate
+  - docker-compose exec -uroot app composer dump-autoload
+  - docker-compose exec -uroot app php artisan migrate
 
 script:
-  - docker-compose exec app ./vendor/bin/phpunit ./tests
+  - docker-compose exec -uroot app ./vendor/bin/phpunit ./tests
