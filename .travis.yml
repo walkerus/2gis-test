@@ -16,6 +16,7 @@ before_script:
   - docker-compose exec -uroot app composer install
   - docker-compose exec -uroot app composer dump-autoload
   - docker-compose exec -uroot app php artisan migrate
+  - docker-compose exec -uroot app php artisan key:generate
 
 script:
   - docker-compose exec -uroot app ./vendor/bin/phpunit ./tests
