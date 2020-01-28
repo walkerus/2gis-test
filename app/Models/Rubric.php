@@ -15,4 +15,12 @@ class Rubric extends Model
     {
         return json_decode(str_replace(['{', '}'], ['[', ']'], $value));
     }
+
+    public function getChildrenIds(): array
+    {
+        return $this->query()
+            ->whereRaw("$this->id = ANY(ancestors)")
+            ->pluck('id')
+            ->toArray();
+    }
 }

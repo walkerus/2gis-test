@@ -39,11 +39,8 @@ class FirmController extends BaseController
 
     public function getAllFirmsInCategory(Rubric $rubric): JsonResponse
     {
-        $rubricsIds = Rubric::query()
-            ->where('id', '=', $rubric->id)
-            ->orWhereRaw("$rubric->id = ANY(ancestors)")
-            ->pluck('id')
-            ->toArray();
+        $rubricsIds = $rubric->getChildrenIds();
+        $rubricsIds[] = $rubric->id;
         $rubricsIds = '{' . implode(',', $rubricsIds) . '}';
 
         $firms = Firm::query()
