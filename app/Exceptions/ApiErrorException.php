@@ -34,7 +34,7 @@ class ApiErrorException extends HttpResponseException
         ];
 
         if (!empty($details)) {
-            $body[0]['detail'] = $details;
+            $body['errors'][0]['detail'] = $details;
         }
 
         parent::__construct(response()->json($body, $code));

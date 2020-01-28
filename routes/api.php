@@ -18,8 +18,8 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::prefix('v1/firms')->group(function () {
-    Route::get('building/{id}', 'Api\V1\FirmController@getAllFirmsInBuilding');
-    Route::get('rubric/{id}', 'Api\V1\FirmController@getAllFirmsInCategory');
+    Route::get('building/{building}', 'Api\V1\FirmController@getAllFirmsInBuilding');
+    Route::get('rubric/{rubric}', 'Api\V1\FirmController@getAllFirmsInCategory');
     Route::get('radius', 'Api\V1\FirmController@getAllFirmsInRadius');
     Route::get('{firm}', 'Api\V1\FirmController@index');
 });

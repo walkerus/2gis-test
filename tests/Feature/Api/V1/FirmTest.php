@@ -21,8 +21,7 @@ class FirmTest extends TestCase
     {
         $response = $this->get('/api/v1/firms/building/1');
 
-        $response->assertStatus(400);
-        $response->assertExactJson(['errors' => [['title' => 'building_not_found', 'status' => 400]]]);
+        $response->assertStatus(404);
     }
 
     public function testGetAllFirmsInBuilding(): void
@@ -120,8 +119,7 @@ class FirmTest extends TestCase
     {
         $response = $this->get('/api/v1/firms/rubric/1');
 
-        $response->assertStatus(400);
-        $response->assertExactJson(['errors' => [['title' => 'rubric_not_found', 'status' => 400]]]);
+        $response->assertStatus(404);
     }
 
     public function testGetAllFirmsInRubric(): void
@@ -245,8 +243,7 @@ class FirmTest extends TestCase
     {
         $response = $this->get('/api/v1/firms/radius');
 
-        $response->assertStatus(400);
-        $response->assertExactJson(['errors' => [['title' => 'bad_params', 'status' => 400]]]);
+        $response->assertStatus(422);
 
         $response = $this->get('/api/v1/firms/radius?radius=1000&latitude=55.9&longitude=90');
 

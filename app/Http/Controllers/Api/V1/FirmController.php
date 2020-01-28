@@ -3,28 +3,19 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Exceptions\ApiErrorException;
+use App\Http\Requests\GetAllFirmsInRadius;
 use App\Models\Building;
 use App\Models\Firm;
 use App\Models\Rubric;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\JsonResponse;
 use App\Http\Resources\Firm as FirmResources;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class FirmController extends BaseController
 {
-    public function getAllFirmsInBuilding(int $buildingId): JsonResponse
+    public function getAllFirmsInBuilding(Building $building): JsonResponse
     {
-        /** @var Building $building */
-        $building = Building::find($buildingId);
-
-        if ($building === null) {
-            throw new ApiErrorException('building_not_found');
-        }
-
         return response()->json(
             [
                 'data' => FirmResources::collection($building->firms)
@@ -46,41 +37,26 @@ class FirmController extends BaseController
         );
     }
 
-    public function getAllFirmsInCategory(int $rubricId): JsonResponse
+    public function getAllFirmsInCategory(Rubric $rubric): JsonResponse
     {
-        $rubric = Rubric::find($rubricId);
-
-        if ($rubric === null) {
-            throw new ApiErrorException('rubric_not_found');
-        }
-
-        $limit = 1000;
-        $page = (int) ($request->page ?? 1);
-        $url = env('APP_URL') . "/api/v1/firms/rubric/$rubricId";
-
         $rubricsIds = Rubric::query()
-            ->where('id', '=', $rubricId)
-            ->orWhereRaw("$rubricId = ANY(ancestors)")
+            ->where('id', '=', $rubric->id)
+            ->orWhereRaw("$rubric->id = ANY(ancestors)")
             ->pluck('id')
             ->toArray();
         $rubricsIds = '{' . implode(',', $rubricsIds) . '}';
 
-        $count = Firm::query()->where('rubrics', '&&', $rubricsIds)->count();
-        $lastPage = (int) ceil($count / $limit);
-
         $firms = Firm::query()
             ->where('rubrics', '&&', $rubricsIds)
-            ->limit($limit)
-            ->offset($limit * ($page - 1))
-            ->get();
+            ->paginate(1000, ['*'], 'page', (int) ($request->page ?? 1));;
 
         return response()->json(
             [
                 'links' => [
-                    'self' => $url . "?page=$page",
-                    'last' => $url . "?page=$lastPage",
+                    'self' => $firms->url($firms->currentPage()),
+                    'last' => $firms->url($firms->lastPage()),
                 ],
-                'data' => FirmResources::collection($firms)
+                'data' => FirmResources::collection($firms->items())
             ],
             200,
             [],
@@ -88,18 +64,8 @@ class FirmController extends BaseController
         );
     }
 
-    public function getAllFirmsInRadius(Request $request): JsonResponse
+    public function getAllFirmsInRadius(GetAllFirmsInRadius $request): JsonResponse
     {
-        try {
-            $request->validate([
-                'radius' => 'required|integer',
-                'latitude' => 'required|numeric|between:-90,90',
-                'longitude' => 'required|numeric|between:-180,180',
-            ]);
-        } catch (ValidationException $ex) {
-            throw new ApiErrorException('bad_params');
-        }
-
         $latitude = (float) $request->latitude;
         $longitude = (float) $request->longitude;
         $radius = ((int) $request->radius) / 1000;

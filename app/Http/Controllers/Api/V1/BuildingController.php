@@ -12,25 +12,18 @@ class BuildingController extends BaseController
 {
     public function index(Request $request): JsonResponse
     {
-        $limit = 1000;
-        $page = (int) ($request->page ?? 1);
-        $count = Building::count();
-        $lastPage = (int) ceil($count / $limit);
-        $url = env('APP_URL') . '/api/v1/buildings';
         $buildings = Building::query()
-            ->limit($limit)
-            ->offset($limit * ($page - 1))
             ->orderBy('id')
             ->with('firms')
-            ->get();
+            ->paginate(1000, ['*'], 'page', (int) ($request->page ?? 1));
 
         return response()->json(
             [
                 'links' => [
-                    'self' => $url . "?page=$page",
-                    'last' => $url . "?page=$lastPage",
+                    'self' => $buildings->url($buildings->currentPage()),
+                    'last' => $buildings->url($buildings->lastPage()),
                 ],
-                'data' => BuildingResources::collection($buildings)
+                'data' => BuildingResources::collection($buildings->items())
             ],
             200,
             [],

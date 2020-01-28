@@ -23,7 +23,7 @@ class BuildingTest extends TestCase
         $response->assertStatus(200);
         $response->assertExactJson([
             'links' => [
-                'last' => env('APP_URL') . '/api/v1/buildings?page=0',
+                'last' => env('APP_URL') . '/api/v1/buildings?page=1',
                 'self' => env('APP_URL') . '/api/v1/buildings?page=1',
             ],
             'data' => []
