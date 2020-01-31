@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Building;
+use App\Models\Firm;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -13,7 +15,7 @@ class BuildingTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        DB::statement('TRUNCATE firms, rubrics, buildings RESTART IDENTITY;');
+        DB::statement('TRUNCATE firm_rubric, firms, rubrics, buildings RESTART IDENTITY;');
     }
 
     public function testBuildingsEmpty(): void
@@ -68,21 +70,21 @@ class BuildingTest extends TestCase
             ]
         ];
 
-        factory(\App\Models\Building::class)->create([
+        factory(Building::class)->create([
             'id' => $expectedData[0]['id'],
             'address' =>  $expectedData[0]['attributes']['address'],
             'latitude' => $expectedData[0]['attributes']['latitude'],
             'longitude' => $expectedData[0]['attributes']['longitude'],
         ]);
 
-        factory(\App\Models\Building::class)->create([
+        factory(Building::class)->create([
             'id' => $expectedData[1]['id'],
             'address' =>  $expectedData[1]['attributes']['address'],
             'latitude' => $expectedData[1]['attributes']['latitude'],
             'longitude' => $expectedData[1]['attributes']['longitude'],
         ]);
 
-        factory(\App\Models\Firm::class)->create([
+        factory(Firm::class)->create([
             'id' => 1,
             'building_id' => 2,
         ]);

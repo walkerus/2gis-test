@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Building;
+use App\Models\Firm;
 use App\Models\Rubric;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +16,7 @@ class FirmTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        DB::statement('TRUNCATE firms, rubrics, buildings RESTART IDENTITY;');
+        DB::statement('TRUNCATE firm_rubric, firms, rubrics, buildings RESTART IDENTITY;');
     }
 
     public function testGetAllFirmsInBuildingNotFound(): void
@@ -26,30 +28,22 @@ class FirmTest extends TestCase
 
     public function testGetAllFirmsInBuilding(): void
     {
-        factory(\App\Models\Building::class)->create([
+        factory(Building::class)->create([
             'id' => 1
         ]);
 
-        $rubric = new Rubric();
-        $rubric->id = 1;
-        $rubric->name = 'Foo';
-        $rubric->ancestors = '{}';
-        $rubric->save();
-
-        factory(\App\Models\Firm::class)->create([
+        factory(Firm::class)->create([
             'id' => 1,
             'building_id' => 1,
             'name' => 'Bar',
             'phones' => '{8-800-5555-35-35, 123}',
-            'rubrics' => '{1}',
         ]);
 
-        factory(\App\Models\Firm::class)->create([
+        factory(Firm::class)->create([
             'id' => 2,
             'building_id' => 1,
             'name' => 'Foo',
             'phones' => '{8-800-5555-35-36, 125}',
-            'rubrics' => '{1}',
         ]);
 
         $response = $this->get('/api/v1/firms/building/1');
@@ -69,12 +63,7 @@ class FirmTest extends TestCase
                     ],
                     "relationships" => [
                         'rubrics' => [
-                            'data' => [
-                                [
-                                    "id" => 1,
-                                    "type" => "rubrics",
-                                ]
-                            ]
+                            'data' => []
                         ],
                         'building' => [
                             'data' => [
@@ -96,12 +85,7 @@ class FirmTest extends TestCase
                     ],
                     "relationships" => [
                         'rubrics' => [
-                            'data' => [
-                                [
-                                    "id" => 1,
-                                    "type" => "rubrics",
-                                ]
-                            ]
+                            'data' => []
                         ],
                         'building' => [
                             'data' => [
@@ -199,32 +183,44 @@ class FirmTest extends TestCase
         $rubric->ancestors = '{1,2}';
         $rubric->save();
 
-        factory(\App\Models\Building::class)->create([
+        factory(Building::class)->create([
             'id' => 1
         ]);
 
-        factory(\App\Models\Firm::class)->create([
+        factory(Firm::class)->create([
             'id' => $expectedData[0]['id'],
             'building_id' => 1,
             'name' => $expectedData[0]['attributes']['name'],
             'phones' => '{111-1, 222-2}',
-            'rubrics' => '{2}',
         ]);
 
-        factory(\App\Models\Firm::class)->create([
+        factory(Firm::class)->create([
             'id' => $expectedData[1]['id'],
             'building_id' => 1,
             'name' => $expectedData[1]['attributes']['name'],
             'phones' => '{111-2, 222-3}',
-            'rubrics' => '{3}',
         ]);
 
-        factory(\App\Models\Firm::class)->create([
+        factory(Firm::class)->create([
             'id' => 10,
             'building_id' => 1,
             'name' => 'firm name',
             'phones' => '{111-4, 222-5}',
-            'rubrics' => '{1}',
+        ]);
+
+        DB::table('firm_rubric')->insert([
+            [
+                'firm_id' => 2,
+                'rubric_id' => 2,
+            ],
+            [
+                'firm_id' => 3,
+                'rubric_id' => 3,
+            ],
+            [
+                'firm_id' => 10,
+                'rubric_id' => 1,
+            ],
         ]);
 
         $response = $this->get('/api/v1/firms/rubric/2');
@@ -313,46 +309,60 @@ class FirmTest extends TestCase
         $rubric->ancestors = '{}';
         $rubric->save();
 
-        factory(\App\Models\Building::class)->create([
+        factory(Building::class)->create([
             'id' => 1,
             'latitude' => 30.6,
             'longitude' => 100.6
         ]);
 
-        factory(\App\Models\Building::class)->create([
+        factory(Building::class)->create([
             'id' => 2,
             'latitude' => 30.501,
             'longitude' => 100.49
         ]);
 
-        factory(\App\Models\Building::class)->create([
+        factory(Building::class)->create([
             'id' => 3,
             'latitude' => 30.508,
             'longitude' => 100.5
         ]);
 
-        factory(\App\Models\Firm::class)->create([
+        factory(Firm::class)->create([
             'id' => 1,
             'building_id' => 1,
             'name' => 'foo',
             'phones' => '{111-1}',
-            'rubrics' => '{1}',
         ]);
 
-        factory(\App\Models\Firm::class)->create([
+        factory(Firm::class)->create([
             'id' => 2,
             'building_id' => 2,
             'name' => 'bar',
             'phones' => '{111-1}',
-            'rubrics' => '{1}',
         ]);
 
-        factory(\App\Models\Firm::class)->create([
+        factory(Firm::class)->create([
             'id' => 3,
             'building_id' => 3,
             'name' => 'boo',
             'phones' => '{111-1}',
-            'rubrics' => '{1}',
+        ]);
+
+
+
+        DB::table('firm_rubric')->insert([
+            [
+                'firm_id' => 1,
+                'rubric_id' => 1,
+            ],
+            [
+                'firm_id' => 2,
+                'rubric_id' => 1,
+            ],
+            [
+                'firm_id' => 3,
+                'rubric_id' => 1,
+            ],
         ]);
 
         $response = $this->get('/api/v1/firms/radius?radius=1000&latitude=30.5&longitude=100.5');

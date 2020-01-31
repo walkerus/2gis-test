@@ -14,5 +14,6 @@ class DatabaseSeeder extends Seeder
          $this->call(BuildingsSeeder::class);
          $this->call(RubricsSeeder::class);
          $this->call(FirmsSeeder::class);
+         $this->call(FirmRubricSeeder::class);
     }
 }

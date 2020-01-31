@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Exceptions\ApiErrorException;
 use App\Http\Requests\GetAllFirmsInRadius;
 use App\Models\Building;
 use App\Models\Firm;
@@ -39,12 +38,15 @@ class FirmController extends BaseController
 
     public function getAllFirmsInCategory(Rubric $rubric): JsonResponse
     {
-        $rubricsIds = $rubric->getChildrenIds();
+        $rubricsIds = $rubric->descendants()->pluck('id');
         $rubricsIds[] = $rubric->id;
-        $rubricsIds = '{' . implode(',', $rubricsIds) . '}';
 
         $firms = Firm::query()
-            ->where('rubrics', '&&', $rubricsIds)
+            ->join('firm_rubric', function(JoinClause $join) use ($rubricsIds) {
+                $join->on('firm_rubric.firm_id', '=', 'firms.id')
+                    ->whereIn('firm_rubric.rubric_id', $rubricsIds);
+            })
+            ->with('rubrics')
             ->paginate(1000, ['*'], 'page', (int) ($request->page ?? 1));;
 
         return response()->json(
@@ -78,6 +80,7 @@ class FirmController extends BaseController
                     ->whereBetween('longitude', [$minLongitude, $maxLongitude]);
             })
             ->with('building')
+            ->with('rubrics')
             ->paginate(1000, ['*'], 'page', (int) ($request->page ?? 1));
 
         $params = $request->request->all();
@@ -96,5 +99,13 @@ class FirmController extends BaseController
             [],
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
         );
+    }
+
+    public function tree()
+    {
+        $firms = Rubric::all();
+        $root = $firms->filter(fn (Rubric $firm) => empty($firm->ancestors));
+
+        dd($root);
     }
 }
