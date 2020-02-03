@@ -28,7 +28,6 @@ class BuildingTest extends TestCase
                 'last' => env('APP_URL') . '/api/v1/buildings?page=1',
                 'self' => env('APP_URL') . '/api/v1/buildings?page=1',
             ],
-            'data' => []
         ]);
     }
 

@@ -3,40 +3,36 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Requests\GetAllFirmsInRadius;
+use App\Http\Responses\StandardJsonResponseFactory;
 use App\Models\Building;
 use App\Models\Firm;
 use App\Models\Rubric;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\JsonResponse;
 use App\Http\Resources\Firm as FirmResources;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 
 class FirmController extends BaseController
 {
-    public function getAllFirmsInBuilding(Building $building): JsonResponse
+    protected StandardJsonResponseFactory $standardJsonResponseFactory;
+
+    public function __construct(StandardJsonResponseFactory $standardJsonResponseFactory)
     {
-        return response()->json(
-            [
-                'data' => FirmResources::collection($building->firms)
-            ],
-            200,
-            [],
-            JSON_UNESCAPED_UNICODE
-        );
-    }
-    public function index(Firm $firm): JsonResponse
-    {
-        return response()->json(
-            [
-                'data' => FirmResources::make($firm)
-            ],
-            200,
-            [],
-            JSON_UNESCAPED_UNICODE
-        );
+        $this->standardJsonResponseFactory = $standardJsonResponseFactory;
     }
 
-    public function getAllFirmsInCategory(Rubric $rubric): JsonResponse
+    public function getAllFirmsInBuilding(Building $building, Request $request): JsonResponse
+    {
+        return $this->standardJsonResponseFactory->createJsonResponse(FirmResources::collection($building->firms));
+    }
+
+    public function index(Firm $firm): JsonResponse
+    {
+        return $this->standardJsonResponseFactory->createJsonResponse(FirmResources::make($firm));
+    }
+
+    public function getAllFirmsInCategory(Rubric $rubric, Request $request): JsonResponse
     {
         $rubricsIds = $rubric->descendants()->pluck('id');
         $rubricsIds[] = $rubric->id;
@@ -47,19 +43,14 @@ class FirmController extends BaseController
                     ->whereIn('firm_rubric.rubric_id', $rubricsIds);
             })
             ->with('rubrics')
-            ->paginate(1000, ['*'], 'page', (int) ($request->page ?? 1));;
+            ->paginate(1000, ['*'], 'page', (int) ($request->page ?? 1));
 
-        return response()->json(
+        return $this->standardJsonResponseFactory->createJsonResponse(
+            FirmResources::collection($firms->items()),
             [
-                'links' => [
-                    'self' => $firms->url($firms->currentPage()),
-                    'last' => $firms->url($firms->lastPage()),
-                ],
-                'data' => FirmResources::collection($firms->items())
+                'self' => $firms->url($firms->currentPage()),
+                'last' => $firms->url($firms->lastPage()),
             ],
-            200,
-            [],
-            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
         );
     }
 
@@ -85,19 +76,14 @@ class FirmController extends BaseController
 
         $params = $request->request->all();
         unset($params['page']);
-        $params = http_build_query($request->request->all());
+        $params = http_build_query($params);
 
-        return response()->json(
+        return $this->standardJsonResponseFactory->createJsonResponse(
+            FirmResources::collection($firms->items()),
             [
-                'links' => [
-                    'self' => $firms->url($firms->currentPage()) . '&' . $params,
-                    'last' => $firms->url($firms->lastPage()) . '&' . $params,
-                ],
-                'data' => FirmResources::collection($firms->items())
-            ],
-            200,
-            [],
-            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                'self' => $firms->url($firms->currentPage()) . '&' . $params,
+                'last' => $firms->url($firms->lastPage()) . '&' . $params,
+            ]
         );
     }
 
